@@ -1,0 +1,143 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+        "name": "base",
+        "hidden": true,
+        "binaryDir": "${sourceDir}/build/${presetName}",
+        "installDir": "${sourceDir}/install/${presetName}",
+        "cacheVariables": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "jobs": 8
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "configurePreset": "release"
+    },
+    {
+      "name": "debug-install",
+      "configurePreset": "debug",
+      "targets": "install"
+    },
+    {
+      "name": "release-install",
+      "configurePreset": "release",
+      "targets": "install"
+    },
+    {
+      "name": "doxygen",
+      "configurePreset": "release",
+      "targets": "doxygen"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output" : {
+        "shortProgress": true,
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "configurePreset": "release"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "debug",
+      "displayName": "debug - build and install",
+      "description": "configure, build, test, and install the debug configuration",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "debug"
+        },
+        {
+          "type": "build",
+          "name": "debug"
+        },
+        {
+          "type": "test",
+          "name": "debug"
+        },
+        {
+          "type": "build",
+          "name": "debug-install"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "displayName": "release - build and install",
+      "description": "configure, build, test, and install the release configuration",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "release"
+        },
+        {
+          "type": "build",
+          "name": "release"
+        },
+        {
+          "type": "test",
+          "name": "release"
+        },
+        {
+          "type": "build",
+          "name": "release-install"
+        }
+      ]
+    },
+    {
+      "name": "doxygen",
+      "displayName": "Doxygen documentation",
+      "description": "configure, generate documentation with Doxygen",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "release"
+        },
+        {
+          "type": "build",
+          "name": "doxygen"
+        }
+      ]
+    }
+  ]
+}
