@@ -1,7 +1,10 @@
 #pragma once
 
+#include "small_integral_powers.hpp"
+
 #include <array>
 #include <complex>
+#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -94,5 +97,13 @@ class RealRootPair
     RealT x1_;
     RealT x2_;
 };
+
+template <typename Real>
+void threshold_imaginary_root(Real& x, Real& y, const Real epsilon = std::numeric_limits<Real>::epsilon())
+{
+    if (square(y) < square(x) * epsilon) {
+        y = 0;
+    }
+}
 
 } // namespace dm::math

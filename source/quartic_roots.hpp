@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cubic_roots.hpp"
+#include "root_pair.hpp"
 
 #include <algorithm>
 #include <array>
@@ -79,7 +80,7 @@ class MonicQuartic
         return radicand2(r) >= 0;
     }
 
-    [[nodiscard]] QuarticRoots<RealT> roots() const noexcept
+    [[nodiscard]] QuarticRoots<RealT> roots(const Real epsilon = std::numeric_limits<Real>::epsilon()) const noexcept
     {
         QuarticRoots<RealT> roots;
         const auto r = resolvent_cubic_roots();
@@ -91,6 +92,7 @@ class MonicQuartic
         } else {
             roots.x1 = sqrt(r.x1) - C();
             roots.y1 = sqrt(-radicand1(r));
+            threshold_imaginary_root(roots.x1, roots.y1, epsilon);
             roots.x2 = roots.x1;
             roots.y2 = -roots.y1;
         }
@@ -102,27 +104,29 @@ class MonicQuartic
         } else {
             roots.x3 = -sqrt(r.x1) - C();
             roots.y3 = sqrt(-radicand2(r));
+            threshold_imaginary_root(roots.x3, roots.y3, epsilon);
             roots.x4 = roots.x3;
             roots.y4 = -roots.y3;
         }
         return roots;
     }
 
-    [[nodiscard]] QuarticRealRoots<RealT> real_roots() const noexcept
+    [[nodiscard]] QuarticRealRoots<RealT>
+    real_roots(const Real epsilon = std::numeric_limits<Real>::epsilon()) const noexcept
     {
-        const auto r = resolvent_cubic_roots();
-        QuarticRealRoots<RealT> roots;
-        roots.pair_one_real = pair_one_real(r);
-        if (roots.pair_one_real) {
-            roots.x1 = sqrt(r.x1) + sqrt(radicand1(r)) - C();
-            roots.x2 = sqrt(r.x1) - sqrt(radicand1(r)) - C();
+        QuarticRoots<RealT> all_roots{roots(epsilon)};
+        QuarticRealRoots<RealT> real_roots;
+        real_roots.pair_one_real = all_roots.y1 == 0;
+        if (real_roots.pair_one_real) {
+            real_roots.x1 = all_roots.x1;
+            real_roots.x2 = all_roots.x2;
         }
-        roots.pair_two_real = pair_two_real(r);
-        if (roots.pair_two_real) {
-            roots.x3 = -sqrt(r.x1) + sqrt(radicand2(r)) - C();
-            roots.x4 = -sqrt(r.x1) - sqrt(radicand2(r)) - C();
+        real_roots.pair_two_real = all_roots.y3 == 0;
+        if (real_roots.pair_two_real) {
+            real_roots.x3 = all_roots.x3;
+            real_roots.x4 = all_roots.x4;
         }
-        return roots;
+        return real_roots;
     }
 
   private:
@@ -186,25 +190,30 @@ class MonicQuartic
 } // namespace internal
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto monic_quartic_roots(const Coefficients& c) -> std::array<std::complex<Real>, 4>
+[[nodiscard]] auto monic_quartic_roots(const Coefficients& c, const Real epsilon = std::numeric_limits<Real>::epsilon())
+    -> std::array<std::complex<Real>, 4>
 {
-    return internal::MonicQuartic<Real>{c[0], c[1], c[2], c[3]}.roots().to_array();
+    return internal::MonicQuartic<Real>{c[0], c[1], c[2], c[3]}.roots(epsilon).to_array();
 }
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto quartic_roots(const Coefficients& c) -> std::array<std::complex<Real>, 4>
+[[nodiscard]] auto quartic_roots(const Coefficients& c, const Real epsilon = std::numeric_limits<Real>::epsilon())
+    -> std::array<std::complex<Real>, 4>
 {
-    return internal::MonicQuartic<Real>{c[0] / c[4], c[1] / c[4], c[2] / c[4], c[3] / c[4]}.roots().to_array();
+    return internal::MonicQuartic<Real>{c[0] / c[4], c[1] / c[4], c[2] / c[4], c[3] / c[4]}.roots(epsilon).to_array();
 }
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto monic_quartic_real_roots(const Coefficients& c) -> std::pair<std::array<Real, 4>, std::size_t>
+[[nodiscard]] auto
+monic_quartic_real_roots(const Coefficients& c, const Real epsilon = std::numeric_limits<Real>::epsilon())
+    -> std::pair<std::array<Real, 4>, std::size_t>
 {
-    return internal::MonicQuartic<Real>{c[0], c[1], c[2], c[3]}.real_roots().to_array();
+    return internal::MonicQuartic<Real>{c[0], c[1], c[2], c[3]}.real_roots(epsilon).to_array();
 }
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto quartic_real_roots(const Coefficients& c) -> std::pair<std::array<Real, 4>, std::size_t>
+[[nodiscard]] auto quartic_real_roots(const Coefficients& c, const Real epsilon = std::numeric_limits<Real>::epsilon())
+    -> std::pair<std::array<Real, 4>, std::size_t>
 {
     if (c[4] == 0) {
         const auto [cubic_roots, n_roots] = cubic_real_roots<Real>(std::array{c[0], c[1], c[2], c[3]});
@@ -212,23 +221,25 @@ template <typename Real, typename Coefficients>
         std::copy_n(std::begin(cubic_roots), n_roots, std::begin(roots));
         return {roots, n_roots};
     }
-    return internal::MonicQuartic<Real>{c[0] / c[4], c[1] / c[4], c[2] / c[4], c[3] / c[4]}.real_roots().to_array();
+    return internal::MonicQuartic<Real>{c[0] / c[4], c[1] / c[4], c[2] / c[4], c[3] / c[4]}.real_roots(epsilon).to_array();
 }
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto monic_quartic_real_roots_sorted(const Coefficients& coefficients)
-    -> std::pair<std::array<Real, 4>, std::size_t>
+[[nodiscard]] auto monic_quartic_real_roots_sorted(
+    const Coefficients& coefficients, const Real epsilon = std::numeric_limits<Real>::epsilon()
+) -> std::pair<std::array<Real, 4>, std::size_t>
 {
-    auto [roots, n_real_roots] = monic_quartic_real_roots<Real>(coefficients);
+    auto [roots, n_real_roots] = monic_quartic_real_roots<Real>(coefficients, epsilon);
     std::sort(roots.begin(), roots.begin() + n_real_roots);
     return {roots, n_real_roots};
 }
 
 template <typename Real, typename Coefficients>
-[[nodiscard]] auto quartic_real_roots_sorted(const Coefficients& coefficients)
+[[nodiscard]] auto
+quartic_real_roots_sorted(const Coefficients& coefficients, const Real epsilon = std::numeric_limits<Real>::epsilon())
     -> std::pair<std::array<Real, 4>, std::size_t>
 {
-    auto [roots, n_real_roots] = quartic_real_roots<Real>(coefficients);
+    auto [roots, n_real_roots] = quartic_real_roots<Real>(coefficients, epsilon);
     std::sort(roots.begin(), roots.begin() + n_real_roots);
     return {roots, n_real_roots};
 }
