@@ -2,10 +2,25 @@
 #include "root_pair.hpp"
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <type_traits>
 
 using namespace dm::math;
+
+using namespace testing;
+
+template <typename RealType>
+testing::internal::FloatingEqMatcher<RealType> RealNear(RealType rhs, RealType max_abs_error) {
+  return testing::internal::FloatingEqMatcher<RealType>(rhs, false, max_abs_error);
+}
+
+MATCHER_P2(ComplexNear, value, max_abs_error,
+           "real " + DescribeMatcher<typename std::remove_reference_t<arg_type>::value_type>(RealNear(value.real(), max_abs_error), negation) +
+           ", imaginary " + DescribeMatcher<typename std::remove_reference_t<arg_type>::value_type>(RealNear(value.imag(), max_abs_error), negation)) {
+    return ExplainMatchResult(RealNear(value.real(), max_abs_error), arg.real(), result_listener) &&
+           ExplainMatchResult(RealNear(value.imag(), max_abs_error), arg.imag(), result_listener);
+}
 
 template <typename PairOne, typename PairTwo>
 struct QuarticTestParams
@@ -126,14 +141,8 @@ TEST_P(QuarticPairOneRealTest, RootCheckEquations)
     const auto roots = quartic_roots<double>(std::array{p.A0(), p.A1(), p.A2(), p.A3(), 1.0});
 
     const auto epsilon = 1e-9;
-    EXPECT_NEAR(roots[0].real(), p.r1().real(), epsilon);
-    EXPECT_NEAR(roots[0].imag(), p.r1().imag(), epsilon);
-    EXPECT_NEAR(roots[1].real(), p.r2().real(), epsilon);
-    EXPECT_NEAR(roots[1].imag(), p.r2().imag(), epsilon);
-    EXPECT_NEAR(roots[2].real(), p.r3().real(), epsilon);
-    EXPECT_NEAR(roots[2].imag(), p.r3().imag(), epsilon);
-    EXPECT_NEAR(roots[3].real(), p.r4().real(), epsilon);
-    EXPECT_NEAR(roots[3].imag(), p.r4().imag(), epsilon);
+    EXPECT_THAT(roots, UnorderedElementsAre(ComplexNear(p.r1(), epsilon), ComplexNear(p.r2(), epsilon),
+                                            ComplexNear(p.r3(), epsilon), ComplexNear(p.r4(), epsilon)));
 }
 
 class QuarticPairTwoRealTest
@@ -153,13 +162,6 @@ TEST_P(QuarticPairTwoRealTest, RootCheckEquations)
     const auto roots = quartic_roots<double>(std::array{p.A0(), p.A1(), p.A2(), p.A3(), 1.0});
 
     const auto epsilon = 1e-9;
-    // FIXME: fails because roots are not ordered the same
-    EXPECT_NEAR(roots[0].real(), p.r1().real(), epsilon);
-    EXPECT_NEAR(roots[0].imag(), p.r1().imag(), epsilon);
-    EXPECT_NEAR(roots[1].real(), p.r2().real(), epsilon);
-    EXPECT_NEAR(roots[1].imag(), p.r2().imag(), epsilon);
-    EXPECT_NEAR(roots[2].real(), p.r3().real(), epsilon);
-    EXPECT_NEAR(roots[2].imag(), p.r3().imag(), epsilon);
-    EXPECT_NEAR(roots[3].real(), p.r4().real(), epsilon);
-    EXPECT_NEAR(roots[3].imag(), p.r4().imag(), epsilon);
+    EXPECT_THAT(roots, UnorderedElementsAre(ComplexNear(p.r1(), epsilon), ComplexNear(p.r2(), epsilon),
+                                            ComplexNear(p.r3(), epsilon), ComplexNear(p.r4(), epsilon)));
 }
