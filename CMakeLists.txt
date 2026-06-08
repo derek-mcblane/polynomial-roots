@@ -9,6 +9,8 @@ include(GNUInstallDirs)
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
 set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 
+option(PolynomialRoots_INSTALL "" ON)
+
 set(PolynomialRoots_WARNING_OPTIONS
     "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wshadow;-Wunused>>"
     "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>"
@@ -26,30 +28,32 @@ if (${PolynomialRoots_ENABLE_TESTING})
     add_subdirectory(tests)
 endif()
 
-export(EXPORT PolynomialRootsTargets
-    NAMESPACE PolynomialRoots::
-)
-install(EXPORT PolynomialRootsTargets
-    NAMESPACE PolynomialRoots::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
-)
+if (PolynomialRoots_INSTALL)
+    export(EXPORT PolynomialRootsTargets
+        NAMESPACE PolynomialRoots::
+    )
+    install(EXPORT PolynomialRootsTargets
+        NAMESPACE PolynomialRoots::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
+    )
 
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfigVersion.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion 
-)
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/PolynomialRootsConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
-)
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
-)
+    write_basic_package_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfigVersion.cmake
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion 
+    )
+    configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/PolynomialRootsConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfig.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
+    )
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/PolynomialRootsConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PolynomialRoots
+    )
 
-export(PACKAGE PolynomialRoots)
+    export(PACKAGE PolynomialRoots)
 
-include(CPack)
+    include(CPack)
+endif()

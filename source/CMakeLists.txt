@@ -14,7 +14,9 @@ PUBLIC FILE_SET HEADERS FILES
     cubic_roots.hpp
     quartic_roots.hpp
 )
-install(TARGETS PolynomialRoots EXPORT PolynomialRootsTargets
-    FILE_SET HEADERS
-    INCLUDES DESTINATIION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+if (PolynomialRoots_INSTALL)
+    install(TARGETS PolynomialRoots EXPORT PolynomialRootsTargets
+        FILE_SET HEADERS
+        INCLUDES DESTINATIION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
